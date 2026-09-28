@@ -15,9 +15,9 @@ struct Node {
 
 class BuildGraph {
 public:
+    bool load_from_file(const std::string& filepath);
     void add_target(const std::string& id, const std::string& command, const std::vector<std::string>& deps);
     bool validate_and_prepare();
-    bool load_from_file(const std::string& filepath);
     std::unordered_map<std::string, std::shared_ptr<Node>>& get_nodes();
 
 private:

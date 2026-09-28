@@ -1,7 +1,35 @@
 #include "BuildGraph.hpp"
 #include <iostream>
+
 #include <fstream>
 #include <sstream>
+
+bool BuildGraph::load_from_file(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Cannot open graph file: " << filepath << "\n";
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::stringstream ss(line);
+        std::string id, cmd, dep_str;
+
+        if (std::getline(ss, id, '|') && std::getline(ss, cmd, '|')) {
+            std::getline(ss, dep_str, '|');
+            std::vector<std::string> deps;
+            std::stringstream dep_ss(dep_str);
+            std::string d;
+            while (std::getline(dep_ss, d, ',')) {
+                if (!d.empty()) deps.push_back(d);
+            }
+            add_target(id, cmd, deps);
+        }
+    }
+    return validate_and_prepare();
+}
 
 void BuildGraph::add_target(const std::string& id, const std::string& command, const std::vector<std::string>& deps) {
     if (!nodes.count(id)) {
@@ -49,33 +77,6 @@ bool BuildGraph::validate_and_prepare() {
         node->unresolved_deps.store(static_cast<int>(node->dependencies.size()));
     }
     return true;
-}
-
-bool BuildGraph::load_from_file(const std::string& filepath) {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-        std::cerr << "Cannot open graph file: " << filepath << "\n";
-        return false;
-    }
-
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        std::stringstream ss(line);
-        std::string id, cmd, dep_str;
-
-        if (std::getline(ss, id, '|') && std::getline(ss, cmd, '|')) {
-            std::getline(ss, dep_str, '|');
-            std::vector<std::string> deps;
-            std::stringstream dep_ss(dep_str);
-            std::string d;
-            while (std::getline(dep_ss, d, ',')) {
-                if (!d.empty()) deps.push_back(d);
-            }
-            add_target(id, cmd, deps);
-        }
-    }
-    return validate_and_prepare();
 }
 
 std::unordered_map<std::string, std::shared_ptr<Node>>& BuildGraph::get_nodes() {
